@@ -1,0 +1,20 @@
+:root {
+  font-family: "DM Sans", sans-serif;
+  color: #29241f;
+  background: #f7e8cb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --cream: #f7e8cb;
+  --cream-deep: #efdbb7;
+  --ink: #29241f;
+  --coral: #e34b2f;
+  --blue: #3155d9;
+  --lime: #d9f16a;
+  --white: #fffaf1;
+  --muted: #777064;
+  --line: rgba(41, 36, 31, .18);
+  --display: "Barlow Condensed", Impact, sans-serif;
+  --body: "DM Sans", sans-serif;
+  --container: 1200px;
+  --radius: 4px;
+}

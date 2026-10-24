@@ -1,0 +1,14 @@
+import { ArrowRight, Heart, MapPin, Sprout, Sun } from "lucide-react";
+import { Link } from "react-router-dom";
+
+export default function About() {
+  return (
+    <section className="about-page">
+      <div className="about-hero"><div className="container about-hero-grid"><div><p className="eyebrow"><span className="eyebrow-dot"/> OUR LITTLE COFFEE CORNER</p><h1>GOOD COFFEE.<br/><span>NO BIG EGO.</span></h1><p>We believe a better cup can make an ordinary day feel a little more extraordinary.</p></div><div className="about-hero-image"><img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=85" alt="Coffee being prepared by hand"/></div></div></div>
+      <div className="container about-story"><div className="about-story-label"><span>01 / THE WHY</span><span>MADE OF COFFEE & CURIOSITY</span></div><div className="about-story-content"><h2>OUR ROOTS ARE<br/>HERE. OUR <span>CUP IS OPEN.</span></h2><p>Indonesia is home to remarkable coffee-growing regions, and every cup can be an invitation to learn more about the people and places behind it.</p><p>Kopi Lokal is a fictional portfolio brand built around that idea: make coffee feel welcoming, make product information easy to understand, and make ordering less complicated for small businesses and their customers.</p><Link to="/shop" className="button button-dark">Find your coffee <ArrowRight size={17}/></Link></div></div>
+      <div className="about-values"><div className="container"><p className="eyebrow">WHAT WE'RE ABOUT</p><h2>SMALL RITUALS.<br/><span>GOOD THINGS.</span></h2><div className="values-grid"><article><span className="value-icon value-coral"><Sprout size={25}/></span><h3>Celebrate local</h3><p>We spotlight Indonesian coffee origins and invite customers to discover new favourites.</p></article><article><span className="value-icon value-blue"><Heart size={25}/></span><h3>Keep it human</h3><p>Clear product details, friendly service, and a simple path from browsing to ordering.</p></article><article><span className="value-icon value-lime"><Sun size={25}/></span><h3>Make it joyful</h3><p>Good design should feel alive, useful, and easy to use on any screen.</p></article></div></div></div>
+      <div className="about-bottom"><div className="container about-bottom-inner"><div><p className="eyebrow">ENOUGH ABOUT US</p><h2>LET'S FIND<br/>YOUR <span>BEAN.</span></h2></div><Link to="/shop" className="button button-primary">Explore the shop <ArrowRight size={17}/></Link><MapPin className="about-bottom-icon" size={82}/></div></div>
+      <p className="container demo-disclaimer">Portfolio concept only. Origin and sourcing details must be verified before this design is adapted for a real coffee business.</p>
+    </section>
+  );
+}
