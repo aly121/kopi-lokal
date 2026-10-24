@@ -14,12 +14,7 @@ const dataDir = path.join(__dirname, "data");
 const ordersFile = path.join(dataDir, "orders.json");
 const PORT = Number(process.env.PORT || 4242);
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || "";
-console.log("Midtrans key check:", {
-  loaded: Boolean(SERVER_KEY.trim()),
-  hasLeadingOrTrailingWhitespace: SERVER_KEY !== SERVER_KEY.trim(),
-  sandboxPrefix: SERVER_KEY.trim().startsWith("SB-Mid-server-"),
-  production: IS_PRODUCTION
-});
+
 const IS_PRODUCTION = process.env.MIDTRANS_IS_PRODUCTION === "true";
 const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined }) : null;
 const MIDTRANS_BASE = IS_PRODUCTION ? "https://api.midtrans.com" : "https://api.sandbox.midtrans.com";
