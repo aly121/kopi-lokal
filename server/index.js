@@ -24,20 +24,62 @@ console.log("Midtrans config:", {
   serverKeyLooksLikeSandbox: SERVER_KEY.startsWith("SB-Mid-server-")
 });
 app.use(express.json({ limit: "1mb" }));
+let databaseReady;
+
+function ensureDatabase() {
+  if (!databaseReady) {
+    databaseReady = initDatabase().catch((error) => {
+      databaseReady = null;
+      throw error;
+    });
+  }
+
+  return databaseReady;
+}
+
+app.use(async (req, res, next) => {
+  try {
+    await ensureDatabase();
+    next();
+  } catch (error) {
+    console.error("Database initialization failed:", error);
+    res.status(500).json({
+      error: "Database initialization failed."
+    });
+  }
+});
 
 async function initDatabase() {
   if (!pool) return;
-  await pool.query(`CREATE TABLE IF NOT EXISTS store_orders (
-    order_id TEXT PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ,
-    payment_status TEXT NOT NULL,
-    order_status TEXT NOT NULL,
-    total BIGINT NOT NULL,
-    order_data JSONB NOT NULL
-  )`);
-  await pool.query("CREATE INDEX IF NOT EXISTS store_orders_created_at_idx ON store_orders (created_at DESC)");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS store_orders (
+      order_id TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ,
+      payment_status TEXT NOT NULL,
+      order_status TEXT NOT NULL,
+      total BIGINT NOT NULL,
+      order_data JSONB NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS store_orders_created_at_idx
+    ON store_orders (created_at DESC)
+  `);
+
+  await pool.query(`
+    ALTER TABLE store_orders
+    ADD COLUMN IF NOT EXISTS queue_date DATE
+  `);
+
+  await pool.query(`
+    ALTER TABLE store_orders
+    ADD COLUMN IF NOT EXISTS queue_number INTEGER
+  `);
 }
+
 
 async function readOrders() {
   if (pool) {
@@ -678,23 +720,38 @@ app.patch("/api/admin/orders/:orderId", adminOnly, async (req, res) => {
 // Sajikan frontend React dari folder hasil build.
 const frontendPath = path.resolve(__dirname, "../dist");
 
-app.use(express.static(frontendPath));
 
-// Fallback untuk React Router.
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/")) {
-    return next();
-  }
+if (!process.env.VERCEL) {
+  app.use(express.static(frontendPath));
 
-  res.sendFile(path.join(frontendPath, "index.html"), (error) => {
-    if (error) next(error);
+  // Fallback untuk React Router saat berjalan lokal.
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+
+    res.sendFile(path.join(frontendPath, "index.html"), (error) => {
+      if (error) next(error);
+    });
   });
-});
+}
 
-initDatabase().then(() => {
-  app.listen(PORT, () => console.log(`Kopi Lokal API listening at http://localhost:${PORT} (${IS_PRODUCTION ? "PRODUCTION" : "SANDBOX"}; ${pool ? "PostgreSQL" : "JSON demo storage"})`));
-}).catch((error) => {
-  console.error("Database initialization failed:", error);
-  process.exit(1);
-});
+
+
+if (!process.env.VERCEL) {
+  ensureDatabase()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(
+          `Kopi Lokal API listening at http://localhost:${PORT} (${IS_PRODUCTION ? "PRODUCTION" : "SANDBOX"}; ${pool ? "PostgreSQL" : "JSON demo storage"})`
+        );
+      });
+    })
+    .catch((error) => {
+      console.error("Database initialization failed:", error);
+      process.exit(1);
+    });
+}
+
+export default app;
 
