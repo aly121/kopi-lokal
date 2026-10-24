@@ -637,21 +637,64 @@ app.get("/api/admin/orders", adminOnly, async (_req, res) => {
   const orders = await readOrders();
   res.json(orders.map(({ orderId, createdAt, updatedAt, customer, items, total, paymentStatus, orderStatus, paymentType, history }) => ({ orderId, createdAt, updatedAt, customer, items, total, paymentStatus, orderStatus, paymentType, history: history || [] })));
 });
+
 app.patch("/api/admin/orders/:orderId", adminOnly, async (req, res) => {
   const allowed = ["new", "preparing", "ready", "completed", "cancelled"];
   if (!allowed.includes(req.body?.orderStatus)) return res.status(400).json({ error: "Invalid order status" });
-  const orders = await readOrders(); const order = orders.find((item) => item.orderId === req.params.orderId);
+  const orders = await readOrders();
+  const order = orders.find((item) => item.orderId === req.params.orderId);
   if (!order) return res.status(404).json({ error: "Order not found" });
-  if (order.paymentStatus !== "paid" && req.body.orderStatus !== "cancelled") return res.status(409).json({ error: "Only paid orders can be processed." });
-  const previousStatus = order.orderStatus;
-  order.orderStatus = req.body.orderStatus; order.updatedAt = new Date().toISOString();
-  if (previousStatus !== order.orderStatus) {
-    const labels = { new: "Pesanan diterima toko", preparing: "Pesanan mulai dibuat", ready: "Pesanan siap diambil", completed: "Pesanan telah diambil", cancelled: "Pesanan dibatalkan" };
-    order.history = [...(order.history || []), { statusType: "order", status: order.orderStatus, label: labels[order.orderStatus], at: order.updatedAt }];
+  if (order.paymentStatus !== "paid" && req.body.orderStatus !== "cancelled") {
+    return res.status(409).json({ error: "Only paid orders can be processed." });
   }
-  await writeOrders(orders); res.json({ ok: true, orderStatus: order.orderStatus, history: order.history || [] });
+
+  const previousStatus = order.orderStatus;
+  order.orderStatus = req.body.orderStatus;
+  order.updatedAt = new Date().toISOString();
+
+  if (previousStatus !== order.orderStatus) {
+    const labels = {
+      new: "Pesanan diterima toko",
+      preparing: "Pesanan mulai dibuat",
+      ready: "Pesanan siap diambil",
+      completed: "Pesanan telah diambil",
+      cancelled: "Pesanan dibatalkan"
+    };
+    order.history = [
+      ...(order.history || []),
+      {
+        statusType: "order",
+        status: order.orderStatus,
+        label: labels[order.orderStatus],
+        at: order.updatedAt
+      }
+    ];
+  }
+
+  await writeOrders(orders);
+  res.json({ ok: true, orderStatus: order.orderStatus, history: order.history || [] });
+});
+
+// Sajikan frontend React dari folder hasil build.
+const frontendPath = path.resolve(__dirname, "../dist");
+
+app.use(express.static(frontendPath));
+
+// Fallback untuk React Router.
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+
+  res.sendFile(path.join(frontendPath, "index.html"), (error) => {
+    if (error) next(error);
+  });
 });
 
 initDatabase().then(() => {
   app.listen(PORT, () => console.log(`Kopi Lokal API listening at http://localhost:${PORT} (${IS_PRODUCTION ? "PRODUCTION" : "SANDBOX"}; ${pool ? "PostgreSQL" : "JSON demo storage"})`));
-}).catch((error) => { console.error("Database initialization failed:", error); process.exit(1); });
+}).catch((error) => {
+  console.error("Database initialization failed:", error);
+  process.exit(1);
+});
+
